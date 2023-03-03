@@ -60,9 +60,9 @@ void test();
 			- 'X' - 100 000
 		- path to the file containing pattern
 		- selected algorithm
-			- "KMP"	- 
-			- "KR"	-
-			- "BM"	-
+			- "KMP"	- Knuth–Morris–Pratt 
+			- "KR"	- Karp-Rabin
+			- "BM"	- Boyet Moore (UNFINISHED)
 */
 
 int main(int argc, char** argv)
@@ -147,8 +147,11 @@ int init_txt(char*& txt, char opt, std::ifstream& file)
 			n--;
 	}
 
-	n = n - 1;
+	if (n < txtSize)
+	{
+		n = n - 1;
 		adjust_txt(txt, n);
+	}
 
 	return n;
 }
