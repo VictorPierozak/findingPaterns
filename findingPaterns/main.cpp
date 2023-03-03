@@ -3,6 +3,7 @@
 #include<vector>
 #include<array>
 #include<cmath>
+#include<algorithm>
 
 // Configuration 
 
@@ -13,9 +14,9 @@ const size_t X_SIZE = 100000;
 
 const int PATTERN_SIZE = 100;
 
-const char* KMP = "KMP\0";
-const char* BM	= "BM\0";
-const char* KR	= "KR\0";
+const char* KMP = "KMP";
+const char* BM	= "BM";
+const char* KR	= "KR";
 
 //Function definition
 
@@ -28,7 +29,7 @@ int init_pattern(char*& pattern, char* argv);
 
 //Core function
 
-std::vector<int> search_pattern(char* algorithm, const char*& txt, const size_t txtLength, const char* pattern, const int patternLength);
+std::vector<int> search_pattern(char* algorithm, char*& txt, const size_t txtLength, const char* pattern, const int patternLength);
 
 //KMP
 
@@ -59,6 +60,9 @@ void test();
 			- 'X' - 100 000
 		- path to the file containing pattern
 		- selected algorithm
+			- "KMP"	- 
+			- "KR"	-
+			- "BM"	-
 */
 
 int main(int argc, char** argv)
@@ -67,6 +71,7 @@ int main(int argc, char** argv)
 	file.open(argv[1]);
 	if (file.is_open() == false)
 	{
+		std::cerr << "TEXT HAS NOT BEEN LOADED";
 		exit(EXIT_FAILURE);
 	}
 	
@@ -79,22 +84,35 @@ int main(int argc, char** argv)
 	std::vector<int> results;
 	std::vector<int> finalResults;
 
-	if (file.eof() == false)
+	int pos = 0;
+
+	if (file.eof() == true)
 	{
 		finalResults = search_pattern(argv[4], txt, txtSize, pattern, patternSize);
 	}
 	else
 	{
-		while (file.eof())
+		while (true)
 		{
 			results = search_pattern(argv[4], txt, txtSize, pattern, patternSize);
+
+			for (int i = 0; i < results.size(); i++)
+				results[i] += pos;
+
 			finalResults.insert(finalResults.end(), results.begin(), results.end());
 
-			size_t txtSize = init_txt(txt, *argv[2], file);
+			pos += txtSize;
+			if (file.eof() == true) break;
+			txtSize = init_txt(txt, *argv[2], file);
+
 		}
 	}
 
 	file.close();
+
+	std::cout << "Positions:\n";
+	for (auto x : finalResults)
+		std::cout << x << ' ';
 
 	return 0;
 }
@@ -123,9 +141,13 @@ int init_txt(char*& txt, char opt, std::ifstream& file)
 
 	int n = 0;
 	for (n = 0; n < txtSize && file.eof() == false; n++)
-		file >> txt[n];
+	{
+		txt[n] = file.get();
+		if (txt[n] == '\n')
+			n--;
+	}
 
-	if (n < txtSize)
+	n = n - 1;
 		adjust_txt(txt, n);
 
 	return n;
@@ -134,10 +156,10 @@ int init_txt(char*& txt, char opt, std::ifstream& file)
 void adjust_txt(char*& txt, const int size)
 {
 	char* buffer = new char[size];
-	strcpy_s(buffer, size, txt);
-	delete txt;
+	strncpy(buffer, txt, size);
+	delete[] txt;
 	txt = new char[size];
-	strcpy_s(txt, size, buffer);
+	strncpy(txt, buffer, size);
 	delete[] buffer;
 }
 
@@ -147,6 +169,7 @@ int init_pattern(char*& pattern, char* argv)
 	file.open(argv);
 	if (file.is_open() == false)
 	{
+		std::cerr << "PATTERN HAS NOT BEEN LOADED!";
 		exit(EXIT_FAILURE);
 	}
 
@@ -163,15 +186,18 @@ int init_pattern(char*& pattern, char* argv)
 		}
 
 		for (; i < pSize && file.eof() == false; i++)
-			file >> pattern[i];
+		{
+			pattern[i] = file.get();
+			if (pattern[i] == '\n')
+				i--;
+		}
 
 	} while (file.eof() == false);
 
-	if (i != pSize)
-	{
-		pSize = i;
+		pSize = i-1;
 		adjust_txt(pattern, pSize);
-	}
+
+	file.close();
 
 	return pSize;
 }
@@ -180,18 +206,18 @@ int init_pattern(char*& pattern, char* argv)
 //	Core function
 //
 
-std::vector<int> search_pattern(char* algorithm, const char*& txt, const size_t txtLength, const char* pattern, const int patternLength)
+std::vector<int> search_pattern(char* algorithm, char*& txt, const size_t txtLength, const char* pattern, const int patternLength)
 {
 	std::vector<int> results;
-	if (algorithm == KMP)
+	if (strcmp(algorithm, KMP) == 0)
 	{
 		results = findPatternKMP(txt, txtLength, pattern, patternLength);
 	}
-	else if (algorithm == KR)
+	else if (strcmp(algorithm, KMP) == 0)
 	{
 		// not finished yet
 	}
-	else if (algorithm == BM)
+	else if (strcmp(algorithm, KMP) == 0)
 	{
 		results = findPatternBM(txt, txtLength, pattern, patternLength);
 	}
